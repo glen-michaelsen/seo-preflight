@@ -19,7 +19,17 @@ export default async function DashboardPage() {
         select: { id: true, status: true, startedAt: true },
       },
     },
+    // screenshotData intentionally excluded here — passed per-card to avoid
+    // loading all blobs in one query. Each card fetches its own via the component.
   });
+
+  // Fetch screenshot metadata (data URL + timestamp) per profile in parallel.
+  // We select only the columns we need so we don't pull giant blobs into one query.
+  const screenshotRows = await prisma.profile.findMany({
+    where: { userId: session.user.id },
+    select: { id: true, screenshotData: true, screenshotUpdatedAt: true },
+  });
+  const screenshotMap = Object.fromEntries(screenshotRows.map((r) => [r.id, r]));
 
   return (
     <div>
@@ -59,8 +69,12 @@ export default async function DashboardPage() {
                 className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gtc-green/40 hover:shadow-md transition-all group"
               >
                 {/* Screenshot thumbnail */}
-                <div className="relative w-full h-40 overflow-hidden">
-                  <SiteScreenshot url={profile.url} name={profile.name} />
+                <div className="relative w-full h-40 overflow-hidden group/card">
+                  <SiteScreenshot
+                    profileId={profile.id}
+                    initialData={screenshotMap[profile.id]?.screenshotData ?? null}
+                    screenshotUpdatedAt={screenshotMap[profile.id]?.screenshotUpdatedAt?.toISOString() ?? null}
+                  />
                   {lastAnalysis && (
                     <div className="absolute top-2.5 right-2.5 z-10">
                       <StatusBadge status={lastAnalysis.status} />
