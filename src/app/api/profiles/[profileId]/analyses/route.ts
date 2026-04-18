@@ -52,6 +52,7 @@ export async function POST(
         },
       },
     },
+    // also pull disabledChecks
   });
   if (!profile || profile.userId !== session.user.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -77,12 +78,16 @@ export async function POST(
     groupIds: check.groups.map((g) => g.groupId),
   }));
 
+  const disabledChecks: string[] = profile.disabledChecks
+    ? JSON.parse(profile.disabledChecks)
+    : [];
+
   const analysis = await prisma.analysis.create({
     data: { profileId, status: "RUNNING" },
   });
 
   try {
-    const results = await runAnalysis(profile.url, pages, customChecks);
+    const results = await runAnalysis(profile.url, pages, customChecks, disabledChecks);
 
     const completed = await prisma.analysis.update({
       where: { id: analysis.id },

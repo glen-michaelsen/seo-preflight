@@ -45,7 +45,8 @@ function buildUrl(baseUrl: string, path: string): string {
 async function analyzePage(
   page: PageInput,
   baseUrl: string,
-  customChecks: CustomCheckInput[]
+  customChecks: CustomCheckInput[],
+  disabled: Set<string>
 ): Promise<PageResult> {
   const url = buildUrl(baseUrl, page.path);
   const { html, finalUrl, httpStatus } = await fetchUrl(url);
@@ -53,6 +54,8 @@ async function analyzePage(
 
   const [robotsTxtResult] = await Promise.all([checkRobotsTxt(finalUrl)]);
 
+  // Build the full standard result list then drop anything explicitly disabled.
+  // Keyword checks are gated separately because they produce N results per keyword.
   const standard = [
     checkHttps(finalUrl),
     checkTitle($),
@@ -67,8 +70,8 @@ async function analyzePage(
     checkViewport($),
     checkLang($),
     checkFavicon($),
-    ...checkKeywords($, page.path, page.keywords),
-  ];
+    ...(disabled.has("keywords") ? [] : checkKeywords($, page.path, page.keywords)),
+  ].filter((c) => !disabled.has(c.checkId));
 
   // Only run custom checks that apply to this page's group (or have no group filter)
   const applicable = customChecks.filter(
@@ -94,8 +97,10 @@ async function analyzePage(
 export async function runAnalysis(
   baseUrl: string,
   pages: PageInput[],
-  customChecks: CustomCheckInput[]
+  customChecks: CustomCheckInput[],
+  disabledChecks: string[] = []
 ): Promise<AnalysisResults> {
+  const disabled = new Set(disabledChecks);
   // If no pages are defined, fall back to root
   const targets: PageInput[] =
     pages.length > 0
@@ -112,7 +117,7 @@ export async function runAnalysis(
         ];
 
   const pageResults = await Promise.allSettled(
-    targets.map((p) => analyzePage(p, baseUrl, customChecks))
+    targets.map((p) => analyzePage(p, baseUrl, customChecks, disabled))
   );
 
   const pages_out: PageResult[] = pageResults.map((result, i) => {

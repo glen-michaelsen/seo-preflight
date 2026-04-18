@@ -24,6 +24,7 @@ model Profile {
   url                  String
   screenshotData       String?   // base64 data URL of cached website screenshot
   screenshotUpdatedAt  DateTime?
+  disabledChecks       String?   // JSON array of standard checkIds that are disabled
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
