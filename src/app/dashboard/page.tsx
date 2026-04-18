@@ -88,7 +88,6 @@ export default async function DashboardPage() {
       scheduleType: true,
       scheduleDayOfWeek: true,
       scheduleDayOfMonth: true,
-      _count: { select: { analyses: true, checks: true } },
       analyses: {
         take: 1,
         orderBy: { startedAt: "desc" },
@@ -156,11 +155,6 @@ export default async function DashboardPage() {
                     initialData={screenshotMap[profile.id]?.screenshotData ?? null}
                     screenshotUpdatedAt={screenshotMap[profile.id]?.screenshotUpdatedAt?.toISOString() ?? null}
                   />
-                  {lastAnalysis && (
-                    <div className="absolute top-2.5 right-2.5 z-10">
-                      <StatusBadge status={lastAnalysis.status} />
-                    </div>
-                  )}
                 </div>
 
                 {/* Card body */}
@@ -169,10 +163,6 @@ export default async function DashboardPage() {
                     {profile.name}
                   </h2>
                   <p className="text-xs text-gray-400 truncate mb-3">{profile.url}</p>
-                  <div className="flex gap-4 text-xs text-gray-500">
-                    <span>{profile._count.analyses} analysis</span>
-                    <span>{profile._count.checks} custom check{profile._count.checks !== 1 ? "s" : ""}</span>
-                  </div>
                   <div className="text-xs text-gray-400 mt-1.5 space-y-0.5">
                     {lastAnalysis ? (
                       <p>
@@ -250,18 +240,3 @@ function StatPill({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    COMPLETE: "bg-green-100 text-green-700",
-    RUNNING: "bg-blue-100 text-blue-700",
-    ERROR: "bg-red-100 text-red-700",
-    PENDING: "bg-gray-100 text-gray-600",
-  };
-  return (
-    <span
-      className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 backdrop-blur-sm ${map[status] ?? "bg-gray-100 text-gray-600"}`}
-    >
-      {status.toLowerCase()}
-    </span>
-  );
-}
