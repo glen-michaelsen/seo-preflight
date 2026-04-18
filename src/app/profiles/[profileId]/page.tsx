@@ -109,10 +109,10 @@ export default async function ProfilePage({
               Pages ({totalPages})
             </Link>
             <Link
-              href={`/profiles/${profile.id}/checks`}
+              href={`/profiles/${profile.id}/checks?tab=standard`}
               className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Custom checks ({profile._count.checks})
+              Project settings
             </Link>
             <RunAnalysisButton profileId={profile.id} />
           </div>

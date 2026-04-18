@@ -17,7 +17,7 @@ export default async function ChecksPage({
 
   const { profileId } = await params;
   const { tab } = await searchParams;
-  const activeTab: "custom" | "standard" = tab === "standard" ? "standard" : "custom";
+  const activeTab: "custom" | "standard" = tab === "custom" ? "custom" : "standard";
 
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
@@ -56,19 +56,6 @@ export default async function ChecksPage({
       {/* Tab switcher */}
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
         <Link
-          href={`/profiles/${profileId}/checks`}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "custom"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Custom checks
-          {profile.checks.length > 0 && (
-            <span className="ml-1.5 text-xs text-gray-400">({profile.checks.length})</span>
-          )}
-        </Link>
-        <Link
           href={`/profiles/${profileId}/checks?tab=standard`}
           className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
             activeTab === "standard"
@@ -79,6 +66,19 @@ export default async function ChecksPage({
           Standard checks
           {disabledChecks.length > 0 && (
             <span className="ml-1.5 text-xs text-red-400">({disabledChecks.length} off)</span>
+          )}
+        </Link>
+        <Link
+          href={`/profiles/${profileId}/checks?tab=custom`}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            activeTab === "custom"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Custom checks
+          {profile.checks.length > 0 && (
+            <span className="ml-1.5 text-xs text-gray-400">({profile.checks.length})</span>
           )}
         </Link>
       </div>
