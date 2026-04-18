@@ -10,11 +10,41 @@ import type {
 
 type Filter = "all" | "fail" | "warn" | "pass";
 
-interface Props {
-  pagesByGroup: Record<string, PageResult[]>;
+interface Totals {
+  pass: number;
+  warn: number;
+  fail: number;
 }
 
-export default function AnalysisResultsClient({ pagesByGroup }: Props) {
+interface Props {
+  pagesByGroup: Record<string, PageResult[]>;
+  totals: Totals;
+}
+
+// Which check statuses are visible under a given filter
+function checkMatchesFilter(status: string, filter: Filter): boolean {
+  if (filter === "all") return true;
+  if (filter === "fail") return status === "fail" || status === "error";
+  if (filter === "warn") return status === "warn";
+  if (filter === "pass") return status === "pass" || status === "info";
+  return true;
+}
+
+// Whether a page should be visible under a given filter
+function pageMatchesFilter(page: PageResult, filter: Filter): boolean {
+  if (filter === "all") return true;
+  const allChecks = [
+    ...page.standard.map((c) => c.status),
+    ...page.custom.map((c) => c.status),
+  ];
+  if (filter === "fail") return allChecks.some((s) => s === "fail" || s === "error");
+  if (filter === "warn") return allChecks.some((s) => s === "warn");
+  if (filter === "pass")
+    return !allChecks.some((s) => s === "fail" || s === "error" || s === "warn");
+  return true;
+}
+
+export default function AnalysisResultsClient({ pagesByGroup, totals }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set());
 
@@ -23,33 +53,8 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
     [pagesByGroup]
   );
 
-  // Page-level status counts
-  const pageCounts = useMemo(() => {
-    let fail = 0;
-    let warn = 0;
-    let pass = 0;
-    for (const page of allPages) {
-      const hasFail =
-        page.standard.some((c) => c.status === "fail") ||
-        page.custom.some((c) => c.status === "fail" || c.status === "error");
-      const hasWarn = page.standard.some((c) => c.status === "warn");
-      if (hasFail) fail++;
-      else if (hasWarn) warn++;
-      else pass++;
-    }
-    return { fail, warn, pass };
-  }, [allPages]);
-
-  const filterPage = (page: PageResult): boolean => {
-    if (filter === "all") return true;
-    const hasFail =
-      page.standard.some((c) => c.status === "fail") ||
-      page.custom.some((c) => c.status === "fail" || c.status === "error");
-    const hasWarn = page.standard.some((c) => c.status === "warn");
-    if (filter === "fail") return hasFail;
-    if (filter === "warn") return !hasFail && hasWarn;
-    if (filter === "pass") return !hasFail && !hasWarn;
-    return true;
+  const toggleFilter = (f: Filter) => {
+    setFilter((prev) => (prev === f ? "all" : f));
   };
 
   const expandAll = () =>
@@ -67,38 +72,42 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
 
   return (
     <div>
-      {/* Controls */}
+      {/* Header row: filter pills + expand controls */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div className="flex gap-2 flex-wrap">
-          <FilterBadge
-            label="All"
-            count={allPages.length}
-            active={filter === "all"}
-            color="gray"
-            onClick={() => setFilter("all")}
-          />
-          <FilterBadge
-            label="Errors"
-            count={pageCounts.fail}
-            active={filter === "fail"}
-            color="red"
-            onClick={() => setFilter(filter === "fail" ? "all" : "fail")}
-          />
-          <FilterBadge
-            label="Warnings"
-            count={pageCounts.warn}
-            active={filter === "warn"}
-            color="yellow"
-            onClick={() => setFilter(filter === "warn" ? "all" : "warn")}
-          />
-          <FilterBadge
+        {/* Score pills — click to filter */}
+        <div className="flex gap-2.5 flex-wrap">
+          <ScorePill
             label="Pass"
-            count={pageCounts.pass}
-            active={filter === "pass"}
+            count={totals.pass}
             color="green"
-            onClick={() => setFilter(filter === "pass" ? "all" : "pass")}
+            active={filter === "pass"}
+            onClick={() => toggleFilter("pass")}
           />
+          <ScorePill
+            label="Warn"
+            count={totals.warn}
+            color="yellow"
+            active={filter === "warn"}
+            onClick={() => toggleFilter("warn")}
+          />
+          <ScorePill
+            label="Fail"
+            count={totals.fail}
+            color="red"
+            active={filter === "fail"}
+            onClick={() => toggleFilter("fail")}
+          />
+          {filter !== "all" && (
+            <button
+              onClick={() => setFilter("all")}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2 transition-colors"
+            >
+              Clear filter ×
+            </button>
+          )}
         </div>
+
+        {/* Expand / collapse */}
         <div className="flex gap-2">
           <button
             onClick={expandAll}
@@ -115,10 +124,10 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
         </div>
       </div>
 
-      {/* Groups */}
+      {/* Groups + pages */}
       <div className="space-y-10">
         {Object.entries(pagesByGroup).map(([groupName, pages]) => {
-          const filtered = pages.filter(filterPage);
+          const filtered = pages.filter((p) => pageMatchesFilter(p, filter));
           if (filtered.length === 0) return null;
           return (
             <section key={groupName}>
@@ -135,6 +144,7 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
                   <PageResultCard
                     key={page.pageId}
                     page={page}
+                    filter={filter}
                     open={expandedPages.has(page.pageId)}
                     onToggle={() => togglePage(page.pageId)}
                   />
@@ -146,7 +156,7 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
       </div>
 
       {filter !== "all" &&
-        Object.values(pagesByGroup).flat().filter(filterPage).length === 0 && (
+        allPages.filter((p) => pageMatchesFilter(p, filter)).length === 0 && (
           <p className="text-center text-gray-400 py-12">
             No pages match this filter.
           </p>
@@ -155,53 +165,68 @@ export default function AnalysisResultsClient({ pagesByGroup }: Props) {
   );
 }
 
-function FilterBadge({
+// ── Score pill (clickable filter button) ────────────────────────────────────
+
+function ScorePill({
   label,
   count,
-  active,
   color,
+  active,
   onClick,
 }: {
   label: string;
   count: number;
+  color: "green" | "yellow" | "red";
   active: boolean;
-  color: "gray" | "red" | "yellow" | "green";
   onClick: () => void;
 }) {
-  const base = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium cursor-pointer transition-colors select-none";
-  const colors = {
-    gray: active
-      ? "bg-gray-800 text-white border-gray-800"
-      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50",
-    red: active
-      ? "bg-red-600 text-white border-red-600"
-      : "bg-white text-red-600 border-red-200 hover:bg-red-50",
-    yellow: active
-      ? "bg-yellow-500 text-white border-yellow-500"
-      : "bg-white text-yellow-600 border-yellow-200 hover:bg-yellow-50",
-    green: active
-      ? "bg-gtc-green text-white border-gtc-green"
-      : "bg-white text-gtc-green border-gtc-green/30 hover:bg-gtc-green/10",
+  const styles = {
+    green: {
+      base: "border-green-200 text-green-700",
+      inactive: "bg-green-50 hover:bg-green-100",
+      active: "bg-green-600 text-white border-green-600",
+    },
+    yellow: {
+      base: "border-yellow-200 text-yellow-700",
+      inactive: "bg-yellow-50 hover:bg-yellow-100",
+      active: "bg-yellow-500 text-white border-yellow-500",
+    },
+    red: {
+      base: "border-red-200 text-red-700",
+      inactive: "bg-red-50 hover:bg-red-100",
+      active: "bg-red-600 text-white border-red-600",
+    },
   };
+  const s = styles[color];
   return (
-    <button className={`${base} ${colors[color]}`} onClick={onClick}>
-      <span className="font-bold">{count}</span>
-      <span className="font-normal">{label}</span>
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors cursor-pointer select-none ${
+        active ? `${s.active}` : `${s.base} ${s.inactive}`
+      }`}
+    >
+      <span className="text-lg font-bold">{count}</span>
+      <span className="font-normal text-xs">{label}</span>
     </button>
   );
 }
 
+// ── Page result card ─────────────────────────────────────────────────────────
+
 function PageResultCard({
   page,
+  filter,
   open,
   onToggle,
 }: {
   page: PageResult;
+  filter: Filter;
   open: boolean;
   onToggle: () => void;
 }) {
+  // Summary pill counts always reflect full page (not filtered)
   const pass = [
-    ...page.standard.filter((c) => c.status === "pass"),
+    ...page.standard.filter((c) => c.status === "pass" || c.status === "info"),
     ...page.custom.filter((c) => c.status === "pass"),
   ].length;
   const warn = page.standard.filter((c) => c.status === "warn").length;
@@ -210,7 +235,16 @@ function PageResultCard({
     ...page.custom.filter((c) => c.status === "fail" || c.status === "error"),
   ].length;
 
-  const grouped = page.standard.reduce<Record<string, StandardCheckResult[]>>(
+  // Visible checks depend on active filter
+  const visibleStandard = page.standard.filter((c) =>
+    checkMatchesFilter(c.status, filter)
+  );
+  const visibleCustom = page.custom.filter((c) =>
+    checkMatchesFilter(c.status, filter)
+  );
+
+  // Group visible standard checks by category
+  const grouped = visibleStandard.reduce<Record<string, StandardCheckResult[]>>(
     (acc, check) => {
       (acc[check.category] ??= []).push(check);
       return acc;
@@ -220,7 +254,7 @@ function PageResultCard({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header / summary row */}
+      {/* Summary row */}
       <button
         type="button"
         onClick={onToggle}
@@ -258,7 +292,7 @@ function PageResultCard({
         </svg>
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded check list — filtered */}
       {open && (
         <div className="border-t border-gray-100">
           {Object.entries(grouped).map(([category, checks]) => (
@@ -274,23 +308,37 @@ function PageResultCard({
             </div>
           ))}
 
-          {page.custom.length > 0 && (
+          {visibleCustom.length > 0 && (
             <div>
               <p className="px-5 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50 border-b border-gray-100">
                 Custom checks
               </p>
               <div className="divide-y divide-gray-100">
-                {page.custom.map((check) => (
+                {visibleCustom.map((check) => (
                   <CustomCheckRow key={check.checkId} check={check} />
                 ))}
               </div>
             </div>
+          )}
+
+          {visibleStandard.length === 0 && visibleCustom.length === 0 && (
+            <p className="px-5 py-4 text-sm text-gray-400 italic">
+              No{" "}
+              {filter === "fail"
+                ? "errors"
+                : filter === "warn"
+                ? "warnings"
+                : "passing checks"}{" "}
+              on this page.
+            </p>
           )}
         </div>
       )}
     </div>
   );
 }
+
+// ── Check rows ───────────────────────────────────────────────────────────────
 
 function CheckRow({ check }: { check: StandardCheckResult }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -313,7 +361,10 @@ function CheckRow({ check }: { check: StandardCheckResult }) {
               <table className="mt-1.5 text-xs w-full border border-gray-100 rounded overflow-hidden">
                 <tbody>
                   {Object.entries(check.details).map(([key, value]) => (
-                    <tr key={key} className="border-t border-gray-100 odd:bg-white even:bg-gray-50">
+                    <tr
+                      key={key}
+                      className="border-t border-gray-100 odd:bg-white even:bg-gray-50"
+                    >
                       <td className="py-1.5 px-3 font-medium text-gray-500 whitespace-nowrap w-1/3 align-top">
                         {key}
                       </td>
@@ -345,6 +396,8 @@ function CustomCheckRow({ check }: { check: CustomCheckResult }) {
     </div>
   );
 }
+
+// ── Utilities ────────────────────────────────────────────────────────────────
 
 function formatDetailValue(value: unknown): string {
   if (Array.isArray(value)) return value.map(String).join(", ");
@@ -413,7 +466,9 @@ function StatusBadge({ status }: { status: CheckStatus | "error" }) {
   };
   return (
     <span
-      className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 capitalize ${map[status] ?? "bg-gray-100 text-gray-600"}`}
+      className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 capitalize ${
+        map[status] ?? "bg-gray-100 text-gray-600"
+      }`}
     >
       {status}
     </span>
@@ -433,9 +488,7 @@ function MiniPill({
     red: "bg-red-100 text-red-700",
   };
   return (
-    <span
-      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[color]}`}
-    >
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[color]}`}>
       {count}
     </span>
   );

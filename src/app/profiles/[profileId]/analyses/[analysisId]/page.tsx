@@ -25,12 +25,12 @@ export default async function AnalysisPage({
     ? JSON.parse(analysis.results)
     : null;
 
-  // Aggregate totals across all pages (check-level, for header pills)
+  // Check-level totals (used as the filter pill counts)
   const totals = results
     ? results.pages.reduce(
         (acc, page) => {
           page.standard.forEach((c) => {
-            if (c.status === "pass") acc.pass++;
+            if (c.status === "pass" || c.status === "info") acc.pass++;
             else if (c.status === "warn") acc.warn++;
             else if (c.status === "fail") acc.fail++;
           });
@@ -44,7 +44,6 @@ export default async function AnalysisPage({
       )
     : null;
 
-  // Group pages by group name for display
   const pagesByGroup = results
     ? results.pages.reduce<Record<string, PageResult[]>>((acc, page) => {
         (acc[page.groupName] ??= []).push(page);
@@ -61,22 +60,13 @@ export default async function AnalysisPage({
         ← {profile.name}
       </Link>
 
-      <div className="mt-3 mb-8 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analysis results</h1>
-          {results && (
-            <p className="text-sm text-gray-500 mt-1">
-              {results.pages.length} page{results.pages.length !== 1 ? "s" : ""}{" "}
-              · {new Date(results.analyzedAt).toLocaleString("en-GB")}
-            </p>
-          )}
-        </div>
-        {totals && (
-          <div className="flex gap-3">
-            <ScorePill label="Pass" count={totals.pass} color="green" />
-            <ScorePill label="Warn" count={totals.warn} color="yellow" />
-            <ScorePill label="Fail" count={totals.fail} color="red" />
-          </div>
+      <div className="mt-3 mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Analysis results</h1>
+        {results && (
+          <p className="text-sm text-gray-500 mt-1">
+            {results.pages.length} page{results.pages.length !== 1 ? "s" : ""}{" "}
+            · {new Date(results.analyzedAt).toLocaleString("en-GB")}
+          </p>
         )}
       </div>
 
@@ -87,33 +77,9 @@ export default async function AnalysisPage({
         </div>
       )}
 
-      {results && (
-        <AnalysisResultsClient pagesByGroup={pagesByGroup} />
+      {results && totals && (
+        <AnalysisResultsClient pagesByGroup={pagesByGroup} totals={totals} />
       )}
-    </div>
-  );
-}
-
-function ScorePill({
-  label,
-  count,
-  color,
-}: {
-  label: string;
-  count: number;
-  color: "green" | "yellow" | "red";
-}) {
-  const colors = {
-    green: "bg-green-50 text-green-700 border-green-200",
-    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    red: "bg-red-50 text-red-700 border-red-200",
-  };
-  return (
-    <div
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-semibold ${colors[color]}`}
-    >
-      <span className="text-lg font-bold">{count}</span>
-      <span className="font-normal text-xs">{label}</span>
     </div>
   );
 }
