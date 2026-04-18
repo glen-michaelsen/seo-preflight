@@ -51,18 +51,6 @@ function nextScheduledRun(
   return null;
 }
 
-/** Format a future date relative to today: "Today", "Tomorrow", day name within a week, or "3 May". */
-function formatNextRun(date: Date): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDays = Math.round((date.getTime() - today.getTime()) / 86_400_000);
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  if (diffDays < 7)
-    return date.toLocaleDateString("en-GB", { weekday: "long" });
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
 
 function computeStats(resultsJson: string | null): CardStats | null {
   if (!resultsJson) return null;
@@ -185,27 +173,28 @@ export default async function DashboardPage() {
                     <span>{profile._count.analyses} analysis</span>
                     <span>{profile._count.checks} custom check{profile._count.checks !== 1 ? "s" : ""}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1.5">
+                  <div className="text-xs text-gray-400 mt-1.5 space-y-0.5">
                     {lastAnalysis ? (
-                      <>
+                      <p>
                         Last run{" "}
                         {new Date(lastAnalysis.startedAt).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
                         })}
-                      </>
+                      </p>
                     ) : (
-                      <span className="text-gray-300">No analysis yet</span>
+                      <p className="text-gray-300">No analysis yet</p>
                     )}
                     {nextRun && (
-                      <span className="text-gray-300"> · </span>
+                      <p className="text-gtc-green/80">
+                        Next run{" "}
+                        {nextRun.toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
                     )}
-                    {nextRun && (
-                      <span className="text-gtc-green/70">
-                        Next {formatNextRun(nextRun)}
-                      </span>
-                    )}
-                  </p>
+                  </div>
                 </div>
 
                 {/* Stats bar */}
