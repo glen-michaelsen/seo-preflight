@@ -5,7 +5,7 @@ export default function SiteFooter() {
     <footer
       style={{ background: "linear-gradient(135deg, #BF1725 0%, #830B15 100%)" }}
     >
-      <div className="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between flex-wrap gap-3">
+      <div className="max-w-6xl mx-auto px-6 py-10 flex items-center justify-between flex-wrap gap-6">
         <a
           href="https://glenstechcorner.com"
           target="_blank"
@@ -15,9 +15,9 @@ export default function SiteFooter() {
           <Image
             src="/assets/gtc-full-negative.svg"
             alt="Glen's Tech Corner"
-            width={160}
-            height={58}
-            className="h-7 w-auto"
+            width={240}
+            height={87}
+            className="h-14 w-auto"
           />
         </a>
         <p className="text-white/70 text-sm">

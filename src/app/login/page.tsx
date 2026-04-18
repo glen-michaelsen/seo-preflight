@@ -111,7 +111,7 @@ export default function LoginPage() {
         rightContent={
           <Link
             href="/register"
-            className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gtc-dark transition-colors"
           >
             Create account
           </Link>

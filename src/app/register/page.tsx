@@ -43,7 +43,7 @@ export default function RegisterPage() {
         rightContent={
           <Link
             href="/login"
-            className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gtc-dark transition-colors"
           >
             Sign in
           </Link>

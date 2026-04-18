@@ -7,10 +7,7 @@ interface SiteHeaderProps {
 
 export default function SiteHeader({ rightContent }: SiteHeaderProps) {
   return (
-    <header
-      className="sticky top-0 z-10 shadow-md"
-      style={{ background: "linear-gradient(135deg, #4D5958 0%, #374241 100%)" }}
-    >
+    <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 shrink-0">
           <Image
@@ -20,7 +17,7 @@ export default function SiteHeader({ rightContent }: SiteHeaderProps) {
             height={32}
             className="rounded-full"
           />
-          <span className="font-semibold text-white text-base tracking-tight">
+          <span className="font-semibold text-gtc-dark text-base tracking-tight">
             SEO Preflight
           </span>
         </Link>

@@ -17,7 +17,7 @@ export default async function ProfilesLayout({
       <SiteHeader
         rightContent={
           <>
-            <span className="text-sm text-white/60 hidden sm:block">
+            <span className="text-sm text-gray-400 hidden sm:block">
               {session.user.email}
             </span>
             <SignOutButton />

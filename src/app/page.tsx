@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth();
+  if (session) redirect("/dashboard");
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader
@@ -10,13 +15,13 @@ export default function LandingPage() {
           <>
             <Link
               href="/login"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              className="text-sm font-medium text-gray-600 hover:text-gtc-dark transition-colors"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="px-4 py-1.5 text-sm font-semibold bg-white text-gtc-green rounded-lg hover:bg-white/90 transition-colors"
+              className="px-4 py-1.5 text-sm font-semibold bg-gtc-green text-white rounded-lg hover:bg-gtc-green-dark transition-colors"
             >
               Get started
             </Link>
