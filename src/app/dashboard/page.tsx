@@ -12,6 +12,58 @@ interface CardStats {
   total: number;
 }
 
+/** Returns the next future date that matches the schedule, or null if no schedule. */
+function nextScheduledRun(
+  scheduleType: string | null,
+  scheduleDayOfWeek: number | null,
+  scheduleDayOfMonth: number | null,
+): Date | null {
+  if (!scheduleType) return null;
+
+  const now = new Date();
+  // Normalise to start-of-today (UTC offset doesn't matter much for day-level accuracy)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (scheduleType === "weekly" && scheduleDayOfWeek !== null) {
+    const todayDow = today.getDay();
+    // Days until next occurrence — never 0 (so we always show a future date)
+    const daysUntil = ((scheduleDayOfWeek - todayDow + 7) % 7) || 7;
+    const next = new Date(today);
+    next.setDate(today.getDate() + daysUntil);
+    return next;
+  }
+
+  if (scheduleType === "monthly" && scheduleDayOfMonth !== null) {
+    // Try this month first
+    const lastDayThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const effectiveThisMonth = Math.min(scheduleDayOfMonth, lastDayThisMonth);
+    if (effectiveThisMonth > today.getDate()) {
+      return new Date(today.getFullYear(), today.getMonth(), effectiveThisMonth);
+    }
+    // Otherwise next month
+    const nm = today.getMonth() + 1;
+    const ny = nm > 11 ? today.getFullYear() + 1 : today.getFullYear();
+    const lastDayNextMonth = new Date(ny, (nm % 12) + 1, 0).getDate();
+    const effectiveNextMonth = Math.min(scheduleDayOfMonth, lastDayNextMonth);
+    return new Date(ny, nm % 12, effectiveNextMonth);
+  }
+
+  return null;
+}
+
+/** Format a future date relative to today: "Today", "Tomorrow", day name within a week, or "3 May". */
+function formatNextRun(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((date.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays < 7)
+    return date.toLocaleDateString("en-GB", { weekday: "long" });
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
 function computeStats(resultsJson: string | null): CardStats | null {
   if (!resultsJson) return null;
   try {
@@ -41,7 +93,13 @@ export default async function DashboardPage() {
   const profiles = await prisma.profile.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      scheduleType: true,
+      scheduleDayOfWeek: true,
+      scheduleDayOfMonth: true,
       _count: { select: { analyses: true, checks: true } },
       analyses: {
         take: 1,
@@ -91,6 +149,11 @@ export default async function DashboardPage() {
           {profiles.map((profile) => {
             const lastAnalysis = profile.analyses[0] ?? null;
             const stats = lastAnalysis ? computeStats(lastAnalysis.results ?? null) : null;
+            const nextRun = nextScheduledRun(
+              profile.scheduleType,
+              profile.scheduleDayOfWeek,
+              profile.scheduleDayOfMonth,
+            );
 
             return (
               <Link
@@ -122,15 +185,27 @@ export default async function DashboardPage() {
                     <span>{profile._count.analyses} analysis</span>
                     <span>{profile._count.checks} custom check{profile._count.checks !== 1 ? "s" : ""}</span>
                   </div>
-                  {lastAnalysis && (
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      Last run{" "}
-                      {new Date(lastAnalysis.startedAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    {lastAnalysis ? (
+                      <>
+                        Last run{" "}
+                        {new Date(lastAnalysis.startedAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </>
+                    ) : (
+                      <span className="text-gray-300">No analysis yet</span>
+                    )}
+                    {nextRun && (
+                      <span className="text-gray-300"> · </span>
+                    )}
+                    {nextRun && (
+                      <span className="text-gtc-green/70">
+                        Next {formatNextRun(nextRun)}
+                      </span>
+                    )}
+                  </p>
                 </div>
 
                 {/* Stats bar */}
