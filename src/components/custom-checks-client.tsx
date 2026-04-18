@@ -194,14 +194,14 @@ export default function CustomChecksClient({
             <div key={check.id} className="px-5 py-4 flex items-start gap-4">
               <button
                 onClick={() => toggleEnabled(check)}
-                className={`mt-0.5 w-8 h-5 rounded-full transition-colors relative shrink-0 ${
+                className={`mt-0.5 w-10 h-6 rounded-full transition-colors relative shrink-0 ${
                   check.enabled ? "bg-green-500" : "bg-gray-300"
                 }`}
                 title={check.enabled ? "Enabled" : "Disabled"}
               >
                 <span
-                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                    check.enabled ? "translate-x-3" : "translate-x-0.5"
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                    check.enabled ? "translate-x-4" : "translate-x-0"
                   }`}
                 />
               </button>
