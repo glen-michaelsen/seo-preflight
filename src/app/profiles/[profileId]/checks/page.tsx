@@ -4,6 +4,9 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import CustomChecksClient from "@/components/custom-checks-client";
 import StandardChecksClient from "@/components/standard-checks-client";
+import ScheduleClient from "@/components/schedule-client";
+
+type Tab = "standard" | "custom" | "schedule";
 
 export default async function ChecksPage({
   params,
@@ -17,7 +20,9 @@ export default async function ChecksPage({
 
   const { profileId } = await params;
   const { tab } = await searchParams;
-  const activeTab: "custom" | "standard" = tab === "custom" ? "custom" : "standard";
+
+  const activeTab: Tab =
+    tab === "custom" ? "custom" : tab === "schedule" ? "schedule" : "standard";
 
   const profile = await prisma.profile.findUnique({
     where: { id: profileId },
@@ -46,9 +51,9 @@ export default async function ChecksPage({
           ← {profile.name}
         </Link>
         <div className="mt-2">
-          <h1 className="text-2xl font-bold text-gray-900">Checks</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Project settings</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Configure which checks run when you analyse this profile.
+            Configure checks and automated scheduling for this profile.
           </p>
         </div>
       </div>
@@ -81,7 +86,29 @@ export default async function ChecksPage({
             <span className="ml-1.5 text-xs text-gray-400">({profile.checks.length})</span>
           )}
         </Link>
+        <Link
+          href={`/profiles/${profileId}/checks?tab=schedule`}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            activeTab === "schedule"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Schedule
+          {profile.scheduleType && (
+            <span className="ml-1.5 text-xs text-gtc-green">
+              {profile.scheduleType === "weekly" ? "weekly" : "monthly"}
+            </span>
+          )}
+        </Link>
       </div>
+
+      {activeTab === "standard" && (
+        <StandardChecksClient
+          profileId={profileId}
+          initialDisabled={disabledChecks}
+        />
+      )}
 
       {activeTab === "custom" && (
         <CustomChecksClient
@@ -91,10 +118,13 @@ export default async function ChecksPage({
         />
       )}
 
-      {activeTab === "standard" && (
-        <StandardChecksClient
+      {activeTab === "schedule" && (
+        <ScheduleClient
           profileId={profileId}
-          initialDisabled={disabledChecks}
+          initialType={profile.scheduleType}
+          initialDayOfWeek={profile.scheduleDayOfWeek}
+          initialDayOfMonth={profile.scheduleDayOfMonth}
+          scheduleLastRunAt={profile.scheduleLastRunAt?.toISOString() ?? null}
         />
       )}
     </div>

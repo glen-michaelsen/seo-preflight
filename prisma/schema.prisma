@@ -25,6 +25,12 @@ model Profile {
   screenshotData       String?   // base64 data URL of cached website screenshot
   screenshotUpdatedAt  DateTime?
   disabledChecks       String?   // JSON array of standard checkIds that are disabled
+
+  // Scheduled analysis
+  scheduleType         String?   // null | "weekly" | "monthly"
+  scheduleDayOfWeek    Int?      // 0=Sun … 6=Sat  (weekly only)
+  scheduleDayOfMonth   Int?      // 1–31            (monthly only; clamped to last day)
+  scheduleLastRunAt    DateTime? // when a scheduled run last fired
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
