@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -55,30 +56,44 @@ export default async function DashboardPage() {
               <Link
                 key={profile.id}
                 href={`/profiles/${profile.id}`}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gtc-green/40 hover:shadow-sm transition-all"
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gtc-green/40 hover:shadow-md transition-all group"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h2 className="font-semibold text-gray-900 truncate pr-2">
-                    {profile.name}
-                  </h2>
+                {/* Screenshot thumbnail */}
+                <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
+                  <Image
+                    src={`https://image.thum.io/get/width/600/crop/400/noanimate/${profile.url}`}
+                    alt={`Screenshot of ${profile.name}`}
+                    fill
+                    className="object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
+                    unoptimized
+                  />
                   {lastAnalysis && (
-                    <StatusBadge status={lastAnalysis.status} />
+                    <div className="absolute top-2.5 right-2.5">
+                      <StatusBadge status={lastAnalysis.status} />
+                    </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 truncate mb-4">{profile.url}</p>
-                <div className="flex gap-4 text-xs text-gray-500">
-                  <span>{profile._count.analyses} analysis</span>
-                  <span>{profile._count.checks} custom check{profile._count.checks !== 1 ? "s" : ""}</span>
+
+                {/* Card body */}
+                <div className="p-4">
+                  <h2 className="font-semibold text-gray-900 truncate mb-1">
+                    {profile.name}
+                  </h2>
+                  <p className="text-xs text-gray-400 truncate mb-3">{profile.url}</p>
+                  <div className="flex gap-4 text-xs text-gray-500">
+                    <span>{profile._count.analyses} analysis</span>
+                    <span>{profile._count.checks} custom check{profile._count.checks !== 1 ? "s" : ""}</span>
+                  </div>
+                  {lastAnalysis && (
+                    <p className="text-xs text-gray-400 mt-1.5">
+                      Last run{" "}
+                      {new Date(lastAnalysis.startedAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  )}
                 </div>
-                {lastAnalysis && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Last run{" "}
-                    {new Date(lastAnalysis.startedAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </p>
-                )}
               </Link>
             );
           })}
