@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import SiteScreenshot from "@/components/site-screenshot";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -59,16 +59,10 @@ export default async function DashboardPage() {
                 className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gtc-green/40 hover:shadow-md transition-all group"
               >
                 {/* Screenshot thumbnail */}
-                <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
-                  <Image
-                    src={`https://image.thum.io/get/width/600/crop/400/noanimate/${profile.url}`}
-                    alt={`Screenshot of ${profile.name}`}
-                    fill
-                    className="object-cover object-top group-hover:scale-[1.02] transition-transform duration-300"
-                    unoptimized
-                  />
+                <div className="relative w-full h-40 overflow-hidden">
+                  <SiteScreenshot url={profile.url} name={profile.name} />
                   {lastAnalysis && (
-                    <div className="absolute top-2.5 right-2.5">
+                    <div className="absolute top-2.5 right-2.5 z-10">
                       <StatusBadge status={lastAnalysis.status} />
                     </div>
                   )}
