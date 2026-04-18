@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "SEO Preflight",
@@ -13,7 +14,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NextTopLoader
+          color="#4D5958"
+          shadow="0 0 8px rgba(77,89,88,0.4)"
+          height={3}
+          showSpinner={false}
+        />
+        {children}
+      </body>
     </html>
   );
 }
