@@ -56,7 +56,7 @@ export default async function AnalysisPage({
     <div>
       <Link
         href={`/profiles/${profileId}`}
-        className="text-sm text-gray-500 hover:text-gray-700"
+        className="text-sm text-gray-500 hover:text-gtc-green transition-colors"
       >
         ← {profile.name}
       </Link>

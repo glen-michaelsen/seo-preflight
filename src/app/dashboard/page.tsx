@@ -31,7 +31,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/profiles/new"
-          className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+          className="px-4 py-2 bg-gtc-green text-white text-sm font-semibold rounded-lg hover:bg-gtc-green-dark transition-colors"
         >
           + New profile
         </Link>
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
           <p className="text-gray-500 text-lg mb-4">No profiles yet</p>
           <Link
             href="/profiles/new"
-            className="px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+            className="px-5 py-2.5 bg-gtc-green text-white font-semibold rounded-lg hover:bg-gtc-green-dark transition-colors"
           >
             Add your first website
           </Link>
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
               <Link
                 key={profile.id}
                 href={`/profiles/${profile.id}`}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-green-300 hover:shadow-sm transition-all"
+                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gtc-green/40 hover:shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <h2 className="font-semibold text-gray-900 truncate pr-2">

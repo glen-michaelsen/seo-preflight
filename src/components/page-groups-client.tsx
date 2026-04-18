@@ -177,12 +177,12 @@ export default function PageGroupsClient({
           value={newGroupName}
           onChange={(e) => setNewGroupName(e.target.value)}
           placeholder="New group name (e.g. Categories)"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green"
         />
         <button
           type="submit"
           disabled={addingGroup || !newGroupName.trim()}
-          className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+          className="px-4 py-2 bg-gtc-green text-white text-sm font-semibold rounded-lg hover:bg-gtc-green-dark disabled:opacity-50 transition-colors"
         >
           + Add group
         </button>
@@ -221,11 +221,11 @@ export default function PageGroupsClient({
                   type="text"
                   value={editingGroupName}
                   onChange={(e) => setEditingGroupName(e.target.value)}
-                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gtc-green"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"
+                  className="px-3 py-1 bg-gtc-green text-white text-xs font-semibold rounded hover:bg-gtc-green-dark"
                 >
                   Save
                 </button>
@@ -275,18 +275,18 @@ export default function PageGroupsClient({
                         value={editPath}
                         onChange={(e) => setEditPath(e.target.value)}
                         placeholder="Path"
-                        className="w-40 px-2 py-1 text-sm border border-gray-300 rounded font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-40 px-2 py-1 text-sm border border-gray-300 rounded font-mono focus:outline-none focus:ring-2 focus:ring-gtc-green"
                       />
                       <input
                         type="text"
                         value={editLabel}
                         onChange={(e) => setEditLabel(e.target.value)}
                         placeholder="Label (optional)"
-                        className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gtc-green"
                       />
                       <button
                         onClick={() => savePage(group.id, page.id)}
-                        className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"
+                        className="px-3 py-1 bg-gtc-green text-white text-xs font-semibold rounded hover:bg-gtc-green-dark"
                       >
                         Save
                       </button>
@@ -299,7 +299,7 @@ export default function PageGroupsClient({
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <code className="text-sm font-mono text-green-700 bg-green-50 px-2 py-0.5 rounded">
+                      <code className="text-sm font-mono text-gtc-green bg-gtc-green/10 px-2 py-0.5 rounded">
                         {page.path}
                       </code>
                       {page.label && (
@@ -339,18 +339,18 @@ export default function PageGroupsClient({
                 onChange={(e) => setNewPath(e.target.value)}
                 placeholder="/path/to/page"
                 required
-                className="w-44 px-2 py-1.5 text-sm border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-44 px-2 py-1.5 text-sm border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gtc-green"
               />
               <input
                 type="text"
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Label (optional)"
-                className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gtc-green"
               />
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700"
+                className="px-3 py-1.5 bg-gtc-green text-white text-sm font-semibold rounded-lg hover:bg-gtc-green-dark"
               >
                 Add
               </button>
@@ -365,7 +365,7 @@ export default function PageGroupsClient({
           ) : (
             <button
               onClick={() => { setAddingPageFor(group.id); setNewPath(""); setNewLabel(""); }}
-              className="w-full px-5 py-3 text-left text-sm text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors border-t border-gray-100"
+              className="w-full px-5 py-3 text-left text-sm text-gray-400 hover:text-gtc-green hover:bg-gtc-green/5 transition-colors border-t border-gray-100"
             >
               + Add page to {group.name}
             </button>

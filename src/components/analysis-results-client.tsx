@@ -180,8 +180,8 @@ function FilterBadge({
       ? "bg-yellow-500 text-white border-yellow-500"
       : "bg-white text-yellow-600 border-yellow-200 hover:bg-yellow-50",
     green: active
-      ? "bg-green-600 text-white border-green-600"
-      : "bg-white text-green-600 border-green-200 hover:bg-green-50",
+      ? "bg-gtc-green text-white border-gtc-green"
+      : "bg-white text-gtc-green border-gtc-green/30 hover:bg-gtc-green/10",
   };
   return (
     <button className={`${base} ${colors[color]}`} onClick={onClick}>
@@ -228,7 +228,7 @@ function PageResultCard({
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <code className="text-sm font-mono font-semibold text-green-700">
+            <code className="text-sm font-mono font-semibold text-gtc-green">
               {page.path}
             </code>
             {page.label && (

@@ -32,7 +32,8 @@ export default function RunAnalysisButton({ profileId }: { profileId: string }) 
       <button
         onClick={handleRun}
         disabled={loading}
-        className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors flex items-center gap-2"
+        className="px-4 py-2 text-white text-sm font-semibold rounded-lg disabled:opacity-60 transition-opacity flex items-center gap-2"
+        style={{ background: "linear-gradient(135deg, #4D5958 0%, #374241 100%)" }}
       >
         {loading && (
           <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">

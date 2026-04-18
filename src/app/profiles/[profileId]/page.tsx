@@ -96,7 +96,7 @@ export default async function ProfilePage({
               href={profile.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-500 hover:text-green-600 transition-colors"
+              className="text-sm text-gray-500 hover:text-gtc-green transition-colors"
             >
               {profile.url}
             </a>
@@ -141,7 +141,7 @@ export default async function ProfilePage({
               Groups exist but have no pages yet.{" "}
               <Link
                 href={`/profiles/${profile.id}/pages`}
-                className="text-green-600 hover:underline"
+                className="text-gtc-green hover:underline"
               >
                 Add pages
               </Link>
@@ -275,7 +275,7 @@ export default async function ProfilePage({
                       {analysis.status === "COMPLETE" ? (
                         <Link
                           href={`/profiles/${profile.id}/analyses/${analysis.id}`}
-                          className="text-sm font-medium text-green-600 hover:underline whitespace-nowrap"
+                          className="text-sm font-medium text-gtc-green hover:underline whitespace-nowrap"
                         >
                           View →
                         </Link>

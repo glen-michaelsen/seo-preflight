@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense } from "react";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 function LoginForm() {
   const router = useRouter();
@@ -37,18 +38,16 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="flex-1 flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold text-green-600">
-            SEO Preflight
-          </Link>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <p className="text-2xl font-bold text-gtc-dark">Sign in</p>
+          <p className="mt-2 text-gray-500">Welcome back</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl border border-gray-200 p-8 space-y-5"
+          className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-5"
         >
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
@@ -65,7 +64,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green focus:border-transparent"
               placeholder="you@example.com"
             />
           </div>
@@ -79,7 +78,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green focus:border-transparent"
               placeholder="••••••••"
             />
           </div>
@@ -87,7 +86,8 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
+            className="w-full py-2.5 text-white font-semibold rounded-lg disabled:opacity-60 transition-opacity"
+            style={{ background: "linear-gradient(135deg, #4D5958 0%, #374241 100%)" }}
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
@@ -95,7 +95,7 @@ function LoginForm() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           No account?{" "}
-          <Link href="/register" className="text-green-600 font-medium hover:underline">
+          <Link href="/register" className="text-gtc-green font-medium hover:underline">
             Create one
           </Link>
         </p>
@@ -106,8 +106,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader
+        rightContent={
+          <Link
+            href="/register"
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+          >
+            Create account
+          </Link>
+        }
+      />
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+      <SiteFooter />
+    </div>
   );
 }

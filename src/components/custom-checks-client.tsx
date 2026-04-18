@@ -173,7 +173,7 @@ export default function CustomChecksClient({
         </p>
         <button
           onClick={openNew}
-          className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+          className="px-4 py-2 bg-gtc-green text-white text-sm font-semibold rounded-lg hover:bg-gtc-green-dark transition-colors"
         >
           + Add check
         </button>
@@ -269,7 +269,7 @@ export default function CustomChecksClient({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green"
                   placeholder="GTM tag present"
                 />
               </div>
@@ -280,7 +280,7 @@ export default function CustomChecksClient({
                 <select
                   value={type}
                   onChange={(e) => handleTypeChange(e.target.value as CheckType)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green bg-white"
                 >
                   {(Object.keys(TYPE_LABELS) as CheckType[]).map((t) => (
                     <option key={t} value={t}>
@@ -299,7 +299,7 @@ export default function CustomChecksClient({
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green"
                 placeholder="Why this check matters"
               />
             </div>
@@ -323,7 +323,7 @@ export default function CustomChecksClient({
               {availableGroups.length === 0 ? (
                 <p className="text-sm text-gray-400">
                   No groups defined yet — this check will run on all pages.{" "}
-                  <a href={`/profiles/${profileId}/pages`} className="text-green-600 hover:underline">
+                  <a href={`/profiles/${profileId}/pages`} className="text-gtc-green hover:underline">
                     Add groups
                   </a>
                 </p>
@@ -342,8 +342,8 @@ export default function CustomChecksClient({
                           onClick={() => toggleGroup(group.id)}
                           className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                             selected
-                              ? "bg-green-600 text-white border-green-600"
-                              : "bg-white text-gray-700 border-gray-300 hover:border-green-400"
+                              ? "bg-gtc-green text-white border-gtc-green"
+                              : "bg-white text-gray-700 border-gray-300 hover:border-gtc-green/50"
                           }`}
                         >
                           {group.name}
@@ -352,10 +352,10 @@ export default function CustomChecksClient({
                     })}
                   </div>
                   {selectedGroupIds.length === 0 && (
-                    <p className="text-xs text-green-600">→ Will run on all pages</p>
+                    <p className="text-xs text-gtc-green">→ Will run on all pages</p>
                   )}
                   {selectedGroupIds.length > 0 && (
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-gtc-green">
                       → Will run only on pages in:{" "}
                       {selectedGroupIds.map((id) => groupMap[id]).join(", ")}
                     </p>
@@ -368,7 +368,7 @@ export default function CustomChecksClient({
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
+                className="px-5 py-2.5 bg-gtc-green text-white font-semibold rounded-lg hover:bg-gtc-green-dark disabled:opacity-60 transition-colors"
               >
                 {loading ? "Saving…" : editing ? "Save changes" : "Add check"}
               </button>
@@ -477,7 +477,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+        className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green ${
           mono ? "font-mono" : ""
         }`}
       />

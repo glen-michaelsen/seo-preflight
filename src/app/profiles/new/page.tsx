@@ -36,7 +36,7 @@ export default function NewProfilePage() {
   return (
     <div className="max-w-lg">
       <div className="mb-6">
-        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gtc-green transition-colors">
           ← Dashboard
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">New website profile</h1>
@@ -61,7 +61,7 @@ export default function NewProfilePage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green focus:border-transparent"
             placeholder="My Company Website"
           />
         </div>
@@ -75,7 +75,7 @@ export default function NewProfilePage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gtc-green focus:border-transparent"
             placeholder="https://example.com"
           />
           <p className="text-xs text-gray-400 mt-1">
@@ -87,7 +87,7 @@ export default function NewProfilePage() {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
+            className="px-5 py-2.5 bg-gtc-green text-white font-semibold rounded-lg hover:bg-gtc-green-dark disabled:opacity-60 transition-colors"
           >
             {loading ? "Creating…" : "Create profile"}
           </button>
