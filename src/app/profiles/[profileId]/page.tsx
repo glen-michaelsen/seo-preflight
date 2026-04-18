@@ -9,6 +9,7 @@ interface AnalysisStats {
   pageCount: number;
   failCount: number;
   warnCount: number;
+  passCount: number;
   totalChecks: number;
 }
 
@@ -18,19 +19,22 @@ function computeStats(resultsJson: string | null): AnalysisStats | null {
     const results: AnalysisResults = JSON.parse(resultsJson);
     let failCount = 0;
     let warnCount = 0;
+    let passCount = 0;
     let totalChecks = 0;
     for (const page of results.pages) {
       for (const c of page.standard) {
         totalChecks++;
         if (c.status === "fail") failCount++;
         else if (c.status === "warn") warnCount++;
+        else passCount++; // pass + info
       }
       for (const c of page.custom) {
         totalChecks++;
         if (c.status === "fail" || c.status === "error") failCount++;
+        else passCount++;
       }
     }
-    return { pageCount: results.pages.length, failCount, warnCount, totalChecks };
+    return { pageCount: results.pages.length, failCount, warnCount, passCount, totalChecks };
   } catch {
     return null;
   }
@@ -39,6 +43,34 @@ function computeStats(resultsJson: string | null): AnalysisStats | null {
 function pct(n: number, total: number): string {
   if (total === 0) return "0%";
   return `${Math.round((n / total) * 100)}%`;
+}
+
+/** Render a Δ badge comparing current vs previous value.
+ *  lowerIsBetter = true  → decrease is green, increase is red  (errors/warnings)
+ *  lowerIsBetter = false → increase is green, decrease is red  (passes)
+ */
+function Delta({
+  current,
+  previous,
+  lowerIsBetter,
+}: {
+  current: number;
+  previous: number;
+  lowerIsBetter: boolean;
+}) {
+  const diff = current - previous;
+  if (diff === 0)
+    return <span className="text-xs text-gray-400 ml-1.5">→ 0</span>;
+
+  const improved = lowerIsBetter ? diff < 0 : diff > 0;
+  const arrow = diff > 0 ? "↑" : "↓";
+  const color = improved ? "text-green-600" : "text-red-500";
+
+  return (
+    <span className={`text-xs font-medium ml-1.5 ${color}`}>
+      {arrow} {Math.abs(diff)}
+    </span>
+  );
 }
 
 export default async function ProfilePage({
@@ -161,6 +193,80 @@ export default async function ProfilePage({
           </Link>
         </div>
       )}
+
+      {/* Last analysis summary */}
+      {(() => {
+        const last  = analysesWithStats.find((a) => a.stats);
+        const prev  = analysesWithStats.filter((a) => a.stats).slice(1).find(Boolean);
+        if (!last?.stats) return null;
+        const s = last.stats;
+        const p = prev?.stats ?? null;
+        return (
+          <div className="mb-8 bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-700">Last analysis</h2>
+              <span className="text-xs text-gray-400">
+                {new Date(last.startedAt).toLocaleString("en-GB", {
+                  day: "numeric", month: "short", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+                {p && (
+                  <span className="ml-2 text-gray-300">
+                    vs{" "}
+                    {new Date(prev!.startedAt).toLocaleString("en-GB", {
+                      day: "numeric", month: "short",
+                    })}
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {/* Errors */}
+              <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+                <p className="text-xs text-red-400 font-medium uppercase tracking-wide mb-1">Errors</p>
+                <div className="flex items-baseline gap-0">
+                  <span className="text-2xl font-bold text-red-600">{s.failCount}</span>
+                  {p && <Delta current={s.failCount} previous={p.failCount} lowerIsBetter />}
+                </div>
+                <p className="text-xs text-red-300 mt-0.5">{pct(s.failCount, s.totalChecks)} of checks</p>
+              </div>
+
+              {/* Warnings */}
+              <div className="rounded-lg border border-yellow-100 bg-yellow-50 px-4 py-3">
+                <p className="text-xs text-yellow-500 font-medium uppercase tracking-wide mb-1">Warnings</p>
+                <div className="flex items-baseline gap-0">
+                  <span className="text-2xl font-bold text-yellow-600">{s.warnCount}</span>
+                  {p && <Delta current={s.warnCount} previous={p.warnCount} lowerIsBetter />}
+                </div>
+                <p className="text-xs text-yellow-300 mt-0.5">{pct(s.warnCount, s.totalChecks)} of checks</p>
+              </div>
+
+              {/* Passes */}
+              <div className="rounded-lg border border-green-100 bg-green-50 px-4 py-3">
+                <p className="text-xs text-green-500 font-medium uppercase tracking-wide mb-1">Passed</p>
+                <div className="flex items-baseline gap-0">
+                  <span className="text-2xl font-bold text-green-600">{s.passCount}</span>
+                  {p && <Delta current={s.passCount} previous={p.passCount} lowerIsBetter={false} />}
+                </div>
+                <p className="text-xs text-green-300 mt-0.5">{pct(s.passCount, s.totalChecks)} of checks</p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-xs text-gray-400">
+                {s.pageCount} page{s.pageCount !== 1 ? "s" : ""} · {s.totalChecks} total checks
+              </p>
+              <Link
+                href={`/profiles/${profile.id}/analyses/${last.id}`}
+                className="text-xs font-medium text-gtc-green hover:underline"
+              >
+                View full results →
+              </Link>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Analysis history */}
       <div>
