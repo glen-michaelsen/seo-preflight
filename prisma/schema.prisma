@@ -53,9 +53,21 @@ model Page {
   label     String?
   createdAt DateTime @default(now())
 
-  group PageGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group    PageGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  keywords Keyword[]
 
   @@index([groupId])
+}
+
+model Keyword {
+  id        String   @id @default(cuid())
+  pageId    String
+  keyword   String
+  createdAt DateTime @default(now())
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
 }
 
 model Analysis {

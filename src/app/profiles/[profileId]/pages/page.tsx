@@ -18,7 +18,12 @@ export default async function PagesPage({
     include: {
       groups: {
         orderBy: { createdAt: "asc" },
-        include: { pages: { orderBy: { createdAt: "asc" } } },
+        include: {
+          pages: {
+            orderBy: { createdAt: "asc" },
+            include: { keywords: { orderBy: { createdAt: "asc" } } },
+          },
+        },
       },
     },
   });
@@ -30,7 +35,7 @@ export default async function PagesPage({
       <div className="mb-8">
         <Link
           href={`/profiles/${profileId}`}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-sm text-gray-500 hover:text-gtc-green transition-colors"
         >
           ← {profile.name}
         </Link>

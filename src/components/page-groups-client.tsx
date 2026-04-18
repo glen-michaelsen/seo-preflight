@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Page, PageGroup } from "@prisma/client";
+import type { Page, PageGroup, Keyword } from "@prisma/client";
 
-type GroupWithPages = PageGroup & { pages: Page[] };
+type PageWithKeywords = Page & { keywords: Keyword[] };
+type GroupWithPages = PageGroup & { pages: PageWithKeywords[] };
 
 export default function PageGroupsClient({
   profileId,
@@ -29,6 +30,10 @@ export default function PageGroupsClient({
   const [editPath, setEditPath] = useState("");
   const [editLabel, setEditLabel] = useState("");
 
+  // Per-page keyword state
+  const [addingKeywordFor, setAddingKeywordFor] = useState<string | null>(null);
+  const [newKeyword, setNewKeyword] = useState("");
+
   const totalPages = groups.reduce((s, g) => s + g.pages.length, 0);
 
   // ── Groups ──────────────────────────────────────────────────────────────
@@ -47,7 +52,7 @@ export default function PageGroupsClient({
 
     if (res.ok) {
       const group: GroupWithPages = await res.json();
-      setGroups((prev) => [...prev, group]);
+      setGroups((prev) => [...prev, { ...group, pages: [] }]);
       setNewGroupName("");
     } else {
       const data = await res.json();
@@ -65,7 +70,7 @@ export default function PageGroupsClient({
     });
     if (res.ok) {
       const updated: GroupWithPages = await res.json();
-      setGroups((prev) => prev.map((g) => (g.id === groupId ? updated : g)));
+      setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...updated, pages: g.pages } : g)));
     }
     setEditingGroupId(null);
   }
@@ -102,7 +107,7 @@ export default function PageGroupsClient({
     );
 
     if (res.ok) {
-      const page: Page = await res.json();
+      const page: PageWithKeywords = { ...(await res.json()), keywords: [] };
       setGroups((prev) =>
         prev.map((g) =>
           g.id === groupId ? { ...g, pages: [...g.pages, page] } : g
@@ -117,7 +122,7 @@ export default function PageGroupsClient({
     }
   }
 
-  function startEditPage(page: Page) {
+  function startEditPage(page: PageWithKeywords) {
     setEditingPageId(page.id);
     setEditPath(page.path);
     setEditLabel(page.label ?? "");
@@ -137,7 +142,12 @@ export default function PageGroupsClient({
       setGroups((prev) =>
         prev.map((g) =>
           g.id === groupId
-            ? { ...g, pages: g.pages.map((p) => (p.id === pageId ? updated : p)) }
+            ? {
+                ...g,
+                pages: g.pages.map((p) =>
+                  p.id === pageId ? { ...updated, keywords: p.keywords } : p
+                ),
+              }
             : g
         )
       );
@@ -156,6 +166,65 @@ export default function PageGroupsClient({
         prev.map((g) =>
           g.id === groupId
             ? { ...g, pages: g.pages.filter((p) => p.id !== pageId) }
+            : g
+        )
+      );
+    }
+  }
+
+  // ── Keywords ─────────────────────────────────────────────────────────────
+
+  async function addKeyword(e: React.FormEvent, groupId: string, pageId: string) {
+    e.preventDefault();
+    if (!newKeyword.trim()) return;
+
+    const res = await fetch(
+      `/api/profiles/${profileId}/groups/${groupId}/pages/${pageId}/keywords`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: newKeyword.trim() }),
+      }
+    );
+
+    if (res.ok) {
+      const created: Keyword = await res.json();
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === groupId
+            ? {
+                ...g,
+                pages: g.pages.map((p) =>
+                  p.id === pageId
+                    ? { ...p, keywords: [...p.keywords, created] }
+                    : p
+                ),
+              }
+            : g
+        )
+      );
+      setNewKeyword("");
+      setAddingKeywordFor(null);
+    }
+  }
+
+  async function removeKeyword(groupId: string, pageId: string, keywordId: string) {
+    const res = await fetch(
+      `/api/profiles/${profileId}/groups/${groupId}/pages/${pageId}/keywords/${keywordId}`,
+      { method: "DELETE" }
+    );
+    if (res.ok) {
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === groupId
+            ? {
+                ...g,
+                pages: g.pages.map((p) =>
+                  p.id === pageId
+                    ? { ...p, keywords: p.keywords.filter((k) => k.id !== keywordId) }
+                    : p
+                ),
+              }
             : g
         )
       );
@@ -199,7 +268,8 @@ export default function PageGroupsClient({
 
       {totalPages > 0 && (
         <p className="text-xs text-gray-400">
-          {totalPages} page{totalPages !== 1 ? "s" : ""} across {groups.length} group{groups.length !== 1 ? "s" : ""} — all will be checked on next analysis run
+          {totalPages} page{totalPages !== 1 ? "s" : ""} across {groups.length} group
+          {groups.length !== 1 ? "s" : ""} — all will be checked on next analysis run
         </p>
       )}
 
@@ -213,7 +283,10 @@ export default function PageGroupsClient({
           <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200">
             {editingGroupId === group.id ? (
               <form
-                onSubmit={(e) => { e.preventDefault(); saveGroupName(group.id); }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveGroupName(group.id);
+                }}
                 className="flex gap-2 flex-1"
               >
                 <input
@@ -268,6 +341,7 @@ export default function PageGroupsClient({
               {group.pages.map((page) => (
                 <div key={page.id} className="px-5 py-3">
                   {editingPageId === page.id ? (
+                    /* ── Edit page path/label ── */
                     <div className="flex gap-2 flex-wrap">
                       <input
                         autoFocus
@@ -298,26 +372,98 @@ export default function PageGroupsClient({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3">
-                      <code className="text-sm font-mono text-gtc-green bg-gtc-green/10 px-2 py-0.5 rounded">
-                        {page.path}
-                      </code>
-                      {page.label && (
-                        <span className="text-sm text-gray-600">{page.label}</span>
-                      )}
-                      <div className="ml-auto flex gap-3">
-                        <button
-                          onClick={() => startEditPage(page)}
-                          className="text-xs text-gray-500 hover:text-gray-800"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deletePage(group.id, page.id)}
-                          className="text-xs text-red-400 hover:text-red-600"
-                        >
-                          Remove
-                        </button>
+                    /* ── Page row ── */
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <code className="text-sm font-mono text-gtc-green bg-gtc-green/10 px-2 py-0.5 rounded">
+                          {page.path}
+                        </code>
+                        {page.label && (
+                          <span className="text-sm text-gray-600">{page.label}</span>
+                        )}
+                        <div className="ml-auto flex gap-3">
+                          <button
+                            onClick={() => startEditPage(page)}
+                            className="text-xs text-gray-500 hover:text-gray-800"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deletePage(group.id, page.id)}
+                            className="text-xs text-red-400 hover:text-red-600"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ── Keywords row ── */}
+                      <div className="flex items-center flex-wrap gap-1.5 pl-1">
+                        {page.keywords.map((kw) => (
+                          <span
+                            key={kw.id}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full"
+                          >
+                            {kw.keyword}
+                            <button
+                              onClick={() => removeKeyword(group.id, page.id, kw.id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors leading-none"
+                              title="Remove keyword"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+
+                        {addingKeywordFor === page.id ? (
+                          <form
+                            onSubmit={(e) => addKeyword(e, group.id, page.id)}
+                            className="flex items-center gap-1"
+                          >
+                            <input
+                              autoFocus
+                              type="text"
+                              value={newKeyword}
+                              onChange={(e) => setNewKeyword(e.target.value)}
+                              placeholder="e.g. buy shoes"
+                              className="w-36 px-2 py-0.5 text-xs border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-gtc-green"
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape") {
+                                  setAddingKeywordFor(null);
+                                  setNewKeyword("");
+                                }
+                              }}
+                            />
+                            <button
+                              type="submit"
+                              disabled={!newKeyword.trim()}
+                              className="text-xs px-2 py-0.5 bg-gtc-green text-white rounded-full hover:bg-gtc-green-dark disabled:opacity-50 transition-colors"
+                            >
+                              Add
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddingKeywordFor(null);
+                                setNewKeyword("");
+                              }}
+                              className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                              ✕
+                            </button>
+                          </form>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setAddingKeywordFor(page.id);
+                              setNewKeyword("");
+                            }}
+                            className="text-xs text-gray-400 hover:text-gtc-green transition-colors px-1"
+                            title="Add target keyword"
+                          >
+                            + keyword
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -356,7 +502,11 @@ export default function PageGroupsClient({
               </button>
               <button
                 type="button"
-                onClick={() => { setAddingPageFor(null); setNewPath(""); setNewLabel(""); }}
+                onClick={() => {
+                  setAddingPageFor(null);
+                  setNewPath("");
+                  setNewLabel("");
+                }}
                 className="px-3 py-1.5 text-gray-600 text-sm border border-gray-300 rounded-lg hover:bg-gray-100"
               >
                 Cancel
@@ -364,7 +514,11 @@ export default function PageGroupsClient({
             </form>
           ) : (
             <button
-              onClick={() => { setAddingPageFor(group.id); setNewPath(""); setNewLabel(""); }}
+              onClick={() => {
+                setAddingPageFor(group.id);
+                setNewPath("");
+                setNewLabel("");
+              }}
               className="w-full px-5 py-3 text-left text-sm text-gray-400 hover:text-gtc-green hover:bg-gtc-green/5 transition-colors border-t border-gray-100"
             >
               + Add page to {group.name}
