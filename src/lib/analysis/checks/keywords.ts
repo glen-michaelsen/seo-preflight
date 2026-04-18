@@ -4,7 +4,17 @@ import type { StandardCheckResult } from "@/types/analysis";
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 function norm(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, " ").trim();
+  return (
+    text
+      .normalize("NFD") // decompose: é → e + U+0301, å → a + U+030A
+      // Strip accent-only combining marks but skip U+030A (ring above → å)
+      // so that Scandinavian letters å/ø/æ are preserved unchanged.
+      .replace(/[\u0300-\u0309\u030b-\u036f]/g, "")
+      .normalize("NFC") // recompose: a + U+030A → å
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 /** Count exact phrase occurrences (word-boundary aware, case-insensitive). */
