@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  profiles Profile[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses Analysis[]
+  checks   CustomCheck[]
+  groups   PageGroup[]
+
+  @@index([userId])
+}
+
+model PageGroup {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  createdAt DateTime @default(now())
+
+  profile      Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  pages        Page[]
+  customChecks CustomCheckOnGroup[]
+
+  @@index([profileId])
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  groupId   String
+  path      String
+  label     String?
+  createdAt DateTime @default(now())
+
+  group PageGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+model Analysis {
+  id           String    @id @default(cuid())
+  profileId    String
+  // status values: PENDING | RUNNING | COMPLETE | ERROR
+  status       String    @default("PENDING")
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  results      String?
+  errorMessage String?
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model CustomCheck {
+  id          String   @id @default(cuid())
+  profileId   String
+  name        String
+  description String?
+  // type values: CONTAINS | NOT_CONTAINS | REGEX | SELECTOR_EXISTS | META_TAG
+  type        String
+  config      String
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile Profile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  groups  CustomCheckOnGroup[]
+
+  @@index([profileId])
+}
+
+// Junction: which groups a custom check applies to.
+// If a check has zero rows here it applies to ALL pages.
+model CustomCheckOnGroup {
+  checkId String
+  groupId String
+
+  check CustomCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  group PageGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([checkId, groupId])
+}
