@@ -13,6 +13,7 @@ import { checkHttps } from "./checks/https";
 import { checkViewport } from "./checks/viewport";
 import { checkLang } from "./checks/lang";
 import { checkFavicon } from "./checks/favicon";
+import { checkKeywords } from "./checks/keywords";
 import { runCustomChecks } from "./custom-checks/runner";
 import type { AnalysisResults, PageResult } from "@/types/analysis";
 
@@ -22,6 +23,7 @@ interface PageInput {
   label: string | null;
   groupId: string;
   groupName: string;
+  keywords: string[];
 }
 
 interface CustomCheckInput {
@@ -65,6 +67,7 @@ async function analyzePage(
     checkViewport($),
     checkLang($),
     checkFavicon($),
+    ...checkKeywords($, page.path, page.keywords),
   ];
 
   // Only run custom checks that apply to this page's group (or have no group filter)
@@ -104,6 +107,7 @@ export async function runAnalysis(
             label: null,
             groupId: "__default__",
             groupName: "Default",
+            keywords: [],
           },
         ];
 

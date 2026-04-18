@@ -47,7 +47,9 @@ export async function POST(
         include: { groups: { select: { groupId: true } } },
       },
       groups: {
-        include: { pages: true },
+        include: {
+          pages: { include: { keywords: true } },
+        },
       },
     },
   });
@@ -63,6 +65,7 @@ export async function POST(
       label: page.label,
       groupId: group.id,
       groupName: group.name,
+      keywords: page.keywords.map((k) => k.keyword),
     }))
   );
 
