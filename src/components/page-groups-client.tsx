@@ -482,17 +482,26 @@ export default function PageGroupsClient({
                 autoFocus
                 type="text"
                 value={newPath}
-                onChange={(e) => setNewPath(e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value;
+                  try {
+                    const u = new URL(val);
+                    val = u.pathname + u.search + u.hash;
+                  } catch {
+                    // not a full URL — keep as typed
+                  }
+                  setNewPath(val);
+                }}
                 placeholder="/path/to/page"
                 required
-                className="w-44 px-2 py-1.5 text-sm border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gtc-green"
+                className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gtc-green"
               />
               <input
                 type="text"
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Label (optional)"
-                className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gtc-green"
+                className="w-44 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gtc-green"
               />
               <button
                 type="submit"
