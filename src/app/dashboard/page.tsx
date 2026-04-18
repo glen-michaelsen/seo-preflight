@@ -3,6 +3,36 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import SiteScreenshot from "@/components/site-screenshot";
+import type { AnalysisResults } from "@/types/analysis";
+
+interface CardStats {
+  fail: number;
+  warn: number;
+  pass: number;
+  total: number;
+}
+
+function computeStats(resultsJson: string | null): CardStats | null {
+  if (!resultsJson) return null;
+  try {
+    const results: AnalysisResults = JSON.parse(resultsJson);
+    let fail = 0, warn = 0, pass = 0;
+    for (const page of results.pages) {
+      for (const c of page.standard) {
+        if (c.status === "fail") fail++;
+        else if (c.status === "warn") warn++;
+        else pass++;
+      }
+      for (const c of page.custom) {
+        if (c.status === "fail" || c.status === "error") fail++;
+        else pass++;
+      }
+    }
+    return { fail, warn, pass, total: fail + warn + pass };
+  } catch {
+    return null;
+  }
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,15 +46,13 @@ export default async function DashboardPage() {
       analyses: {
         take: 1,
         orderBy: { startedAt: "desc" },
-        select: { id: true, status: true, startedAt: true },
+        where: { status: "COMPLETE" },
+        select: { id: true, status: true, startedAt: true, results: true },
       },
     },
-    // screenshotData intentionally excluded here — passed per-card to avoid
-    // loading all blobs in one query. Each card fetches its own via the component.
   });
 
-  // Fetch screenshot metadata (data URL + timestamp) per profile in parallel.
-  // We select only the columns we need so we don't pull giant blobs into one query.
+  // Fetch screenshot metadata separately (avoids loading blobs in the main query)
   const screenshotRows = await prisma.profile.findMany({
     where: { userId: session.user.id },
     select: { id: true, screenshotData: true, screenshotUpdatedAt: true },
@@ -61,15 +89,17 @@ export default async function DashboardPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => {
-            const lastAnalysis = profile.analyses[0];
+            const lastAnalysis = profile.analyses[0] ?? null;
+            const stats = lastAnalysis ? computeStats(lastAnalysis.results ?? null) : null;
+
             return (
               <Link
                 key={profile.id}
                 href={`/profiles/${profile.id}`}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gtc-green/40 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gtc-green/40 hover:shadow-md transition-all group flex flex-col"
               >
                 {/* Screenshot thumbnail */}
-                <div className="relative w-full h-40 overflow-hidden group/card">
+                <div className="relative w-full h-40 overflow-hidden group/card shrink-0">
                   <SiteScreenshot
                     profileId={profile.id}
                     initialData={screenshotMap[profile.id]?.screenshotData ?? null}
@@ -83,7 +113,7 @@ export default async function DashboardPage() {
                 </div>
 
                 {/* Card body */}
-                <div className="p-4">
+                <div className="p-4 flex-1">
                   <h2 className="font-semibold text-gray-900 truncate mb-1">
                     {profile.name}
                   </h2>
@@ -102,11 +132,56 @@ export default async function DashboardPage() {
                     </p>
                   )}
                 </div>
+
+                {/* Stats bar */}
+                {stats ? (
+                  <div className="border-t border-gray-100 px-4 py-2.5 flex items-center gap-3">
+                    <StatPill color="red" label="Errors" value={stats.fail} total={stats.total} />
+                    <StatPill color="yellow" label="Warnings" value={stats.warn} total={stats.total} />
+                    <StatPill color="green" label="Passed" value={stats.pass} total={stats.total} />
+                  </div>
+                ) : (
+                  <div className="border-t border-gray-100 px-4 py-2.5">
+                    <p className="text-xs text-gray-300">No analysis yet</p>
+                  </div>
+                )}
               </Link>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function StatPill({
+  color,
+  label,
+  value,
+  total,
+}: {
+  color: "red" | "yellow" | "green";
+  label: string;
+  value: number;
+  total: number;
+}) {
+  const dot: Record<string, string> = {
+    red: "bg-red-400",
+    yellow: "bg-yellow-400",
+    green: "bg-green-400",
+  };
+  const text: Record<string, string> = {
+    red: value > 0 ? "text-red-600 font-semibold" : "text-gray-400",
+    yellow: value > 0 ? "text-yellow-600 font-semibold" : "text-gray-400",
+    green: "text-green-600 font-semibold",
+  };
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+
+  return (
+    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${dot[color]}`} />
+      <span className={`text-xs tabular-nums ${text[color]}`}>{value}</span>
+      <span className="text-xs text-gray-300 truncate">{pct}%</span>
     </div>
   );
 }
@@ -120,7 +195,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${map[status] ?? "bg-gray-100 text-gray-600"}`}
+      className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 backdrop-blur-sm ${map[status] ?? "bg-gray-100 text-gray-600"}`}
     >
       {status.toLowerCase()}
     </span>
